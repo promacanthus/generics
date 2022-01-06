@@ -4,6 +4,10 @@ Generics are the most significant change to Go since the release of Go 1.
 
 ## Using Generics
 
+```shell
+all: gofmt -w -r 'interface{} -> any' src
+```
+
 **Write code, don't design types.**
 
 先编写数据结构和函数，再指定其中的类型。使用泛型后，函数拥有一种新的参数，称为“类型参数”。对于类型参数，我们会说实例化而不是调用，因为相关操作完全在编译阶段而不是在运行时发生。
@@ -37,9 +41,9 @@ func MapKeys[K comparable, V any](m map[K]V)[]K{
 
 首先编写函数，稍后，当你清晰地看到可以使用类型参数时再轻松地添加，
 
-1. Functions that work on slices，maps and channels of any element type.
+1. Functions that work on slices，maps and channels of any element type. For example, a function to merge two channels would work with any channel type.
     对该语言中定义的特殊类型进行操作的函数：切片、映射和通道，如果函数具有这些类型的参数，并且函数代码没有对元素类型做出任何特定假设，那么使用类型参数可能会很有用。
-2. General purpose data structures.
+2. General purpose data structures.  For example, we can use generics to factor out the element type if we implement a binary tree, a linked list, or a heap.
     2.1 When operating on type parameters, prefer functions to methods.
 通用数据结构，类似切片或映射，但是没有内置到语言中，可以使用特定的元素类型进行编写或者使用接口类型，将特定元素类型替换为参数类型，生成更通用的数据结构。
 将接口类型替换为类型参数，通常可以更高效地存储数据，在某些情况下，使用类型参数而不是接口类型，代码可以避免了类型断言，而且可以在编译时就进行全面的类型检查。
@@ -55,7 +59,7 @@ type leaf[T any] struct {
 }
 ```
 
-3. when a method looks the same for all types.
+3. when a method looks the same for all types. Meanwhile, instead of factoring out a type, we can factor out behaviors. For example, the sort package contains functions to sort different slice types such as sort.Ints or sort.Float64s. Using type parameters, we can factor out the sorting behaviors that rely on three methods, Len, Less, and Swap.
 当不同的类型需要实现一些通用方法，而针对各种类型的实现看起来都相同时，使用类型参数时合理的做法。
 ```go
 // SliceFn implements sort.Interface for any slice type.
@@ -77,13 +81,13 @@ func SortFn[T any](s []T, cmp func(T, T) bool){
 
 ### when not to use generics
 
-1. When just calling a method on the type argument.
+1. When just calling a method on the type argument. For example, consider a function that receives an io.Writer and call the Write method.
 Go 具有接口类型，接口类型已经允许某种泛型编程，例如io.Reader接口提供了一种通用机制，用于从包含信息（如文件）或生成信息（如随机数生成器）的任何值中读取数据，对于某个类型的值，如果只需要对该值调用一个方法，请使用接口类型而不是类型参数。
 2. When the implementation of a common method is different for each type.
 当不同的类型使用一个共同的方法时，考虑该方法的实现，如果一个方法的实现对于所有类型都相同，则使用类型参数，相反，如果每种类型的实现各不相同，使用不同的方法，不要使用类型参数。例如，从文件读取的实现与从随机数生成器读取的实现完全不同，这意味着要编写两种不同的读取方法，两种方法都不应该使用类型参数。
 3. When the operation is different for each type, even without a method.
 如果某些操作必须支持甚至没有方法的类型，那么接口类型就不起作用，并且如果每种类型的操作都不同，请使用发射，例如JSON编码包，我们不要求我们编码的每个类型都支持marshal JSON方法，因此不能使用接口类型，但是对帧数类型进行编码与对结构体类型进行编码完全不同，因此不应该使用类型参数，所以标准库中使用的是反射，就是实现起来有点复杂。
-
+4. When it makes our code more complex. Generics are never mandatory, and as Go developers, we have been able to live without them for more than a decade. If writing generic functions or structures we figure out that it doesn’t make our code clearer, we should probably reconsider our decision for this particular use case.
 
 ### guideline
 
