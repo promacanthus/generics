@@ -1,10 +1,11 @@
 # Generics
 
-[官方提案](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md)
+- [官方提案](https://go.googlesource.com/proposal/+/refs/heads/master/design/43651-type-parameters.md)
+- [官方博客](https://go.dev/blog/intro-generics)
 
 Generics are the most significant change to Go since the release of Go 1.
 
-Go 是一门强类型语言，意味着程序中的每个变量和值都有某种特定的类型。有泛型，不代表你一定要用。在没有泛型的时候，我们有三个选择：
+Go 是一门强类型语言，意味着程序中的每个变量和值都有某种特定的类型。现在有泛型了，不代表你一定要用。在没有泛型的时候，我们有三个选择：
 
 1. [代码生成](./docs/generator_generics.md)
 2. 反射
@@ -12,15 +13,15 @@ Go 是一门强类型语言，意味着程序中的每个变量和值都有某�
 
 **Write code, don't design types.**
 
-先编写好数据结构和函数，再指定其中的类型。使用泛型后，函数拥有一种新的参数，称为“类型参数”。对于类型参数，我们会说实例化而不是调用，因为相关操作完全在编译阶段而不是在运行时发生。类型参数具有限制条件，限制允许的类型实参集。
+泛型的意思就是，先编写好数据结构和函数，再指定其中的类型。使用泛型后，函数拥有一种新的参数，称为“类型参数”。对于类型参数，我们会说实例化而不是调用，因为相关操作完全在编译阶段而不是在运行时发生。类型参数具有限制条件，限制允许的类型实参集。
 
 ## 泛型约束
 
-constraints 定义了一组用于类型参数（泛型）的有用约束。实际上 Go 会进行类型推断，即编译器会通过普通参数的类型推导出类型参数。不过，跟 Go 中其他类型自动推导类似，有些情况是无法自动推导的，这时候必须手动指定实际的类型参数。
+[`constraints`](golang.org/x/exp/constraints) 包中定义了一组用于类型参数（泛型）的约束条件。实际上 Go 会进行类型推断，即编译器会通过普通参数的类型推导出类型参数。不过，跟 Go 中其他类型自动推导类似，有些情况是无法自动推导的，这时候必须手动指定实际的类型参数。
 
 ### any
 
-Go 语言自身实现，表示没有任何约束，`any` 是 `interface{}` 的别名，但是，注意与 `interface{}` 这样的任意类型区分开, 泛型中的类型，在函数内部并不需要任何类型断言和反射的工作，在编译期就可以确定具体的类型。
+Go 语言自身实现，表示没有任何约束，`any` 是 `interface{}` 的别名，但是，注意与 `interface{}` 这样的任意类型区分开, 泛型中的类型，在函数内部并不需要任何**类型断言**和**反射**的工作，在编译期就可以确定具体的类型。
 
 ```go
 type any = interface{}
@@ -47,23 +48,29 @@ Go 语言本身实现，是一个 `interface` 表示可比较（相等与否的�
 - arrays of comparable types
 - structs whose fields are all comparable types
 
-**只能最为泛型的参数类型，不能作为变量的类型**。
+**只能作为泛型的参数类型，不能作为变量的类型**。
 
 ### `~`
 
-如下约束 `~string` 表示的是，支持 `string` 类型以及底层是 `string` 类型的类型。因此，`MyString` 类型也可以作为上面 `add` 函数的类型参数。
+如下约束 `~string` 表示的是，支持 `string` 类型以及底层是 `string` 类型的类型。因此，`MyString` 类型也可以作为下面 `add` 函数的类型参数。
 
 ```go
 func add[T ~string](x, y T) T {}
 
 type MyString string
+
+func demo(){
+    a, b := MyString("a"), MyString("b")
+    s := add(a, b)
+    fmt.Println(s)
+}
 ```
 
 ### 接口约束
 
 定义一个 `interface` 其中包含对应的约束，称为类型列表，使用 `|` 分隔，有或的含义。
 
-为了方便，官方提供了一个新的包`constraints`，预定义了一些接口约束。
+为了方便，官方提供了一个新的包 [`constraints`](golang.org/x/exp/constraints) ，预定义了一些接口约束。
 
 ```go
 // Package constraints defines a set of useful constraints to be used
@@ -126,7 +133,7 @@ type customConstraint interface {
 ## 注意点
 
 1. 类型参数不能用在方法上，只能用在函数上。
-2. 如果约束是channel，对泛型不能用make函数。
+2. 如果约束是 channel，对泛型不能用 `make()` 函数。
 
 ## 使用泛型
 
@@ -183,7 +190,7 @@ type leaf[T any] struct {
 // SliceFn implements sort.Interface for any slice type.
 type SliceFn[T any] struct{
     s []T
-    cmp func（T, T) bool
+    cmp func(T, T) bool
 }
 
 func (s SliceFn[T]) Len() int {return len(s.s)}
