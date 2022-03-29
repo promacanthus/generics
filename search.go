@@ -2,7 +2,7 @@ package generic
 
 import "golang.org/x/exp/constraints"
 
-// Max returns the maximal value from a slice.
+// Max returns the maximum from a slice.
 func Max[T constraints.Ordered](s []T) T {
 	var max T
 	if len(s) == 0 {
@@ -18,7 +18,7 @@ func Max[T constraints.Ordered](s []T) T {
 	return max
 }
 
-// Min returns the minimal value from a slice.
+// Min returns the minimum from a slice.
 func Min[T constraints.Ordered](s []T) T {
 	var min T
 	if len(s) == 0 {
@@ -32,4 +32,19 @@ func Min[T constraints.Ordered](s []T) T {
 		}
 	}
 	return min
+}
+
+// Contains checks if a slice contains given value.
+func Contains[T comparable](s []T, t T) bool {
+	if len(s) == 0 {
+		return false
+	}
+
+	for _, v := range s {
+		if v == t {
+			return true
+		}
+	}
+
+	return false
 }
