@@ -1,4 +1,4 @@
-package generic
+package generics
 
 // Keys gets keys from any map.
 func Keys[K comparable, V any](m map[K]V) []K {
